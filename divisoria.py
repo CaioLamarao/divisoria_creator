@@ -293,7 +293,18 @@ def nome_e_numero(d, img, b, jy0, jh, util, numero, nome, sub, cor, capa=None, v
         escreve_junto(d, meio, y + fs.size * 0.55, " ".join(sub), fs, cor, 0, REFORCO)
 
 
-def frente(arco, pasta_capas, sangria, opacidade=OPACIDADE):
+def pontilha(img, caixa, mascara):
+    """Troca os cinzas da caixa por pontos de preto puro, como numa retícula de jornal.
+    Impressora jato de tinta caseira faz cinza claro com a tinta colorida, e sem ela
+    o cinza some; ponto preto ela sempre imprime. Ponto de 2 px: mais firme no papel."""
+    x0, y0, x1, y1 = caixa
+    reg = img.crop(caixa).convert("L")
+    meio = reg.resize((reg.width // 2, reg.height // 2), Image.LANCZOS)
+    pontos = meio.convert("1").resize(reg.size, Image.NEAREST).convert("RGB")
+    img.paste(pontos, (x0, y0), mascara)
+
+
+def frente(arco, pasta_capas, sangria, opacidade=OPACIDADE, pontilhar=False):
     numero, nome, volume, caps, novo, vol_capa, sub = arco
     b = SANGRIA if sangria else 0
     img = Image.new("RGB", (W + 2 * b, H + 2 * b), "black")
@@ -310,6 +321,8 @@ def frente(arco, pasta_capas, sangria, opacidade=OPACIDADE):
     img.paste(janela, (jx0, jy0), mj)
 
     faixas(img, jx0, jy0, jx1, jy1)
+    if pontilhar:
+        pontilha(img, (jx0, jy0, jx1, jy1), mj)
     d = ImageDraw.Draw(img)
     meio, _ = moldura(d, b, b)
 
@@ -389,7 +402,7 @@ def gera(pasta, lista, sub, capas):
             os.path.join(pasta, "cartas", "%02d-frente.png" % n), dpi=(DPI, DPI))
         arredonda(verso(arco, False)).save(
             os.path.join(pasta, "cartas", "%02d-verso.png" % n), dpi=(DPI, DPI))
-        frentes.append(frente(arco, capas, True))
+        frentes.append(frente(arco, capas, True, pontilhar=True))
         versos.append(verso(arco, True))
 
     paginas = []
