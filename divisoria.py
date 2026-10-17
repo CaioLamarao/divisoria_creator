@@ -223,26 +223,40 @@ def escreve_junto(d, cx, cy, texto, fonte, cor, aperto, traco=0):
         x += p
 
 
-def moldura(d, ox, oy):
-    """A aba chanfrada que sobe do bloco de baixo; ox/oy deslocam pela sangria."""
+FIO = 3    # px do contorno na versao economica, sem preto chapado
+
+
+def moldura(d, ox, oy, eco=False):
+    """A aba chanfrada que sobe do bloco de baixo; ox/oy deslocam pela sangria.
+    Na versao economica a moldura vira so contorno: a borda da carta, a janela e a aba."""
     jy1 = oy + H - BLOCO
     meio = ox + W / 2
     meia = W * ABA_LARG / 2
     ch = ABA_ALT * 1.1
-    d.polygon([(meio - meia - ch, jy1 + 1), (meio - meia, jy1 - ABA_ALT),
-               (meio + meia, jy1 - ABA_ALT), (meio + meia + ch, jy1 + 1)], fill="black")
+    aba = [(meio - meia - ch, jy1 + 1), (meio - meia, jy1 - ABA_ALT),
+           (meio + meia, jy1 - ABA_ALT), (meio + meia + ch, jy1 + 1)]
+    if eco:
+        d.rounded_rectangle([ox, oy, ox + W - 1, oy + H - 1], radius=RAIO_FORA, outline="black", width=FIO)
+        d.rounded_rectangle([ox + LADO, oy + LADO, ox + W - LADO, jy1], radius=RAIO_DENTRO,
+                            outline="black", width=FIO)
+        d.polygon(aba, fill="white")
+        d.line(aba, fill="black", width=FIO, joint="curve")
+    else:
+        d.polygon(aba, fill="black")
     return meio, jy1
 
 
-def rodape(d, meio, jy1, volume, caps):
+def rodape(d, meio, jy1, volume, caps, eco=False):
+    # no papel branco o texto vai em preto: cinza claro a impressora nao imprime
+    cor_vol, cor_cap = ("black", "black") if eco else (CINZA_TEXTO, CINZA_APOIO)
     fv = fonte_reta(mm(4.2))
     escreve_junto(d, meio, jy1 - ABA_ALT + mm(2.6), "Vol. %03d" % volume,
-                  fv, CINZA_TEXTO, mm(0.25))
+                  fv, cor_vol, mm(0.25))
     fc = fonte_reta(mm(2.9), "SemiBold Condensed")
     ini, fim = caps
     texto = "Cap. %03d \u2013 %03d" % caps if fim else "Cap. %03d \u2013" % ini
     escreve_junto(d, meio, jy1 + mm(6.3), texto,
-                  fc, CINZA_APOIO, mm(0.12))
+                  fc, cor_cap, mm(0.12))
 
 
 TOM_TRACO = 140   # o quanto a linha clareia o preto do numero: cinza, e nao branco
@@ -304,10 +318,10 @@ def pontilha(img, caixa, mascara):
     img.paste(pontos, (x0, y0), mascara)
 
 
-def frente(arco, pasta_capas, sangria, opacidade=OPACIDADE, pontilhar=False):
+def frente(arco, pasta_capas, sangria, opacidade=OPACIDADE, pontilhar=False, eco=False):
     numero, nome, volume, caps, novo, vol_capa, sub = arco
     b = SANGRIA if sangria else 0
-    img = Image.new("RGB", (W + 2 * b, H + 2 * b), "black")
+    img = Image.new("RGB", (W + 2 * b, H + 2 * b), "white" if eco else "black")
     jx0, jy0, jx1, jy1 = b + LADO, b + LADO, b + W - LADO, b + H - BLOCO
     jw, jh = jx1 - jx0, jy1 - jy0
 
@@ -324,7 +338,7 @@ def frente(arco, pasta_capas, sangria, opacidade=OPACIDADE, pontilhar=False):
     if pontilhar:
         pontilha(img, (jx0, jy0, jx1, jy1), mj)
     d = ImageDraw.Draw(img)
-    meio, _ = moldura(d, b, b)
+    meio, _ = moldura(d, b, b, eco)
 
     if novo:
         fs = fonte_reta(mm(2.6), "SemiBold Condensed")
@@ -337,22 +351,25 @@ def frente(arco, pasta_capas, sangria, opacidade=OPACIDADE, pontilhar=False):
             d.line([(xa, y), (xa + s * mm(6), y)], fill=(40, 40, 40), width=2)
 
     nome_e_numero(d, img, b, jy0, jh, jw - mm(6), numero, nome, sub, "black", capa, vol_capa)
-    rodape(d, meio, jy1, volume, caps)
+    rodape(d, meio, jy1, volume, caps, eco)
     return img
 
 
-def verso(arco, sangria):
-    """Preto liso, para o bolso de tras do fichario mostrar a mesma divisoria."""
+def verso(arco, sangria, eco=False):
+    """Preto liso, para o bolso de tras do fichario mostrar a mesma divisoria.
+    Na versao economica, branco com o contorno e o texto em preto."""
     numero, nome, volume, caps, _, _, sub = arco
     b = SANGRIA if sangria else 0
-    img = Image.new("RGB", (W + 2 * b, H + 2 * b), "black")
+    img = Image.new("RGB", (W + 2 * b, H + 2 * b), "white" if eco else "black")
     d = ImageDraw.Draw(img)
     jx0, jy0, jx1, jy1 = b + LADO, b + LADO, b + W - LADO, b + H - BLOCO
-    # fio fino da janela, para o verso ter a forma da frente
-    d.rounded_rectangle([jx0, jy0, jx1, jy1], radius=RAIO_DENTRO, outline=(70, 70, 70), width=2)
-    nome_e_numero(d, img, b, jy0, jy1 - jy0, jx1 - jx0 - mm(6), numero, nome, sub, "white")
-    meio, jy1 = moldura(d, b, b)
-    rodape(d, meio, jy1, volume, caps)
+    if not eco:
+        # fio fino da janela, para o verso ter a forma da frente
+        d.rounded_rectangle([jx0, jy0, jx1, jy1], radius=RAIO_DENTRO, outline=(70, 70, 70), width=2)
+    nome_e_numero(d, img, b, jy0, jy1 - jy0, jx1 - jx0 - mm(6), numero, nome, sub,
+                  "black" if eco else "white")
+    meio, jy1 = moldura(d, b, b, eco)
+    rodape(d, meio, jy1, volume, caps, eco)
     return img
 
 
