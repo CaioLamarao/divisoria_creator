@@ -1,8 +1,9 @@
-"""Divisorias de arco para o fichario: frente, verso e folhas A4 com sangria.
+"""Divisorias do fichario: frente, verso e folhas A4 com sangria, em dois conjuntos.
 
 uso: python divisoria.py <pasta-de-saida> <pasta-das-capas>
-As capas sao vol-NNN.jpg: o volume onde o arco comeca, ou o escolhido em CAPAS.
-Capa que falta sai sem fundo.
+Gera <saida>/sagas (so as grandes sagas) e <saida>/arcos (todos os arcos).
+As capas sao vol-NNN.jpg: a escolhida para o arco ou, sem escolha, o volume onde
+ele comeca. Capa que falta sai sem fundo.
 """
 import sys, os
 from PIL import Image, ImageDraw, ImageFont, ImageOps, ImageFilter
@@ -41,36 +42,56 @@ RETA = "C:/Windows/Fonts/bahnschrift.ttf"                       # sans reta, Bol
 RETA_LIVRE = {"Bold Condensed": os.path.join(FONTES, "BarlowCondensed-Bold.ttf"),
               "SemiBold Condensed": os.path.join(FONTES, "BarlowCondensed-SemiBold.ttf")}
 
-ARCOS = [
-    # numero, nome, volume, capitulos, novo mundo
-    (1, "East Blue", 1, (1, 100), False),
-    (2, "Drum Island", 12, (101, 154), False),   # com Reverse Mountain, Whisky Peak e Little Garden
-    (3, "Alabasta", 17, (155, 217), False),
-    (4, "Jaya", 24, (218, 236), False),
-    (5, "Skypiea", 26, (237, 302), False),
-    (6, "Long Ring Long Land", 32, (303, 321), False),
-    (7, "Water 7", 34, (322, 374), False),
-    (8, "Enies Lobby", 39, (375, 430), False),
-    (9, "Thriller Bark", 46, (442, 489), False),
-    (10, "Sabaody", 50, (490, 513), False),
-    (11, "Amazon Lily", 53, (514, 524), False),
-    (12, "Impel Down", 54, (525, 548), False),
-    (13, "Marineford", 56, (549, 580), False),
-    (14, "Fish-Man Island", 61, (603, 653), True),
-    (15, "Punk Hazard", 66, (654, 699), True),
-    (16, "Dressrosa", 70, (700, 801), True),
-    (17, "Zou", 80, (802, 824), True),
-    (18, "Whole Cake Island", 82, (825, 902), True),
-    (19, "Wano", 90, (909, 1057), True),
-    (20, "Egghead", 105, (1058, 1125), True),
-    (21, "Elbaph", 111, (1126, None), True),     # em andamento: sem capitulo final
+# nome, volume de inicio, capitulos, novo mundo, capa do fundo (None: a do volume de inicio)
+# a numeracao sai da ordem na lista
+SAGAS = [
+    ("East Blue", 1, (1, 100), False, 1),
+    ("Alabasta", 12, (101, 217), False, 20),
+    ("Skypiea", 24, (218, 302), False, 30),
+    ("Enies Lobby", 32, (303, 441), False, 44),
+    ("Thriller Bark", 46, (442, 489), False, 48),
+    ("Marineford", 50, (490, 597), False, 57),
+    ("Fish-Man Island", 61, (598, 653), True, 61),
+    ("Dressrosa", 66, (654, 801), True, 72),
+    ("Whole Cake Island", 80, (802, 908), True, 83),
+    ("Wano", 90, (909, 1057), True, 103),
+    ("Egghead", 105, (1058, 1125), True, 106),
+    ("Elbaph", 111, (1126, None), True, 112),     # em andamento: sem capitulo final
 ]
 
-# arcos cujo fundo vem de outra capa que nao a do volume de inicio
-CAPAS = {"Drum Island": 16, "Alabasta": 20, "Skypiea": 30, "Long Ring Long Land": 33,
-         "Water 7": 37, "Enies Lobby": 44, "Thriller Bark": 48, "Sabaody": 51,
-         "Marineford": 57, "Punk Hazard": 67, "Dressrosa": 72, "Zou": 81,
-         "Whole Cake Island": 83, "Wano": 103, "Egghead": 106, "Elbaph": 112}
+# todo arco que ocupa ao menos um volume inteiro, mais Amazon Lily;
+# os trechos curtos entram no arco vizinho e os capitulos ficam continuos
+ARCOS = [
+    ("Romance Dawn", 1, (1, 7), False, 1),
+    ("Orange Town", 1, (8, 21), False, 2),
+    ("Syrup Village", 3, (22, 41), False, None),
+    ("Baratie", 5, (42, 68), False, None),
+    ("Arlong Park", 8, (69, 100), False, None),          # com Loguetown
+    ("Little Garden", 12, (101, 129), False, None),      # com Reverse Mountain e Whisky Peak
+    ("Drum Island", 15, (130, 154), False, 16),
+    ("Alabasta", 17, (155, 217), False, 20),
+    ("Jaya", 24, (218, 236), False, 24),
+    ("Skypiea", 26, (237, 302), False, 30),
+    ("Long Ring Long Land", 32, (303, 321), False, 33),
+    ("Water 7", 34, (322, 374), False, 37),
+    ("Enies Lobby", 39, (375, 441), False, 44),          # com o pos-Enies Lobby
+    ("Thriller Bark", 46, (442, 489), False, 48),
+    ("Sabaody", 50, (490, 513), False, 51),
+    ("Amazon Lily", 53, (514, 524), False, 53),
+    ("Impel Down", 54, (525, 548), False, 54),
+    ("Marineford", 56, (549, 580), False, 57),
+    ("Post-War", 59, (581, 597), False, None),
+    ("Fish-Man Island", 61, (598, 653), True, 61),       # com o retorno a Sabaody
+    ("Punk Hazard", 66, (654, 699), True, 67),
+    ("Dressrosa", 70, (700, 801), True, 72),
+    ("Zou", 80, (802, 824), True, 81),
+    ("Whole Cake Island", 82, (825, 908), True, 83),     # com a Reverie
+    ("Wano", 90, (909, 1057), True, 103),
+    ("Egghead", 105, (1058, 1125), True, 106),
+    ("Elbaph", 111, (1126, None), True, 112),
+]
+
+CONJUNTOS = [("sagas", SAGAS, "SAGA"), ("arcos", ARCOS, None)]
 
 # o recorte de cada capa que fica no fundo: sem o logo e sem os creditos
 # (esquerda, topo, direita, base), em fracao da capa
@@ -233,7 +254,7 @@ def tracos(cinza):
     return dif.point(lambda v: 255 - round(TOM_TRACO * min(1, max(0, (v - 8) / 30))))
 
 
-def nome_e_numero(d, img, b, jy0, jh, util, numero, nome, cor, capa=None, volume=None):
+def nome_e_numero(d, img, b, jy0, jh, util, numero, nome, sub, cor, capa=None, volume=None):
     meio = b + W / 2
     num = str(numero)
     fn = cabe(d, num, SERIFA, 470, util * 0.9)
@@ -259,16 +280,19 @@ def nome_e_numero(d, img, b, jy0, jh, util, numero, nome, cor, capa=None, volume
     for l in linhas:
         d.text((meio, y), l, font=fonte, fill=cor, anchor="mt")
         y += fonte.size * 1.02
+    if sub:
+        # "SAGA" logo abaixo, no mesmo desenho e um pouco menor
+        fs = ImageFont.truetype(SERIFA, round(fonte.size * 0.62))
+        escreve_junto(d, meio, y + fs.size * 0.55, " ".join(sub), fs, cor, 0)
 
 
 def frente(arco, pasta_capas, sangria):
-    numero, nome, volume, caps, novo = arco
+    numero, nome, volume, caps, novo, vol_capa, sub = arco
     b = SANGRIA if sangria else 0
     img = Image.new("RGB", (W + 2 * b, H + 2 * b), "black")
     jx0, jy0, jx1, jy1 = b + LADO, b + LADO, b + W - LADO, b + H - BLOCO
     jw, jh = jx1 - jx0, jy1 - jy0
 
-    vol_capa = CAPAS.get(nome, volume)
     capa = capa_de(pasta_capas, vol_capa)
     a = arte(capa, vol_capa, jw, jh) if capa else Image.new("L", (jw, jh), 255)
     janela = Image.blend(Image.new("L", (jw, jh), 255), a, OPACIDADE).convert("RGB")
@@ -290,21 +314,21 @@ def frente(arco, pasta_capas, sangria):
             xa = meio + s * (tl / 2 + mm(1.5))
             d.line([(xa, y), (xa + s * mm(6), y)], fill=(40, 40, 40), width=2)
 
-    nome_e_numero(d, img, b, jy0, jh, jw - mm(6), numero, nome, "black", capa, vol_capa)
+    nome_e_numero(d, img, b, jy0, jh, jw - mm(6), numero, nome, sub, "black", capa, vol_capa)
     rodape(d, meio, jy1, volume, caps)
     return img
 
 
 def verso(arco, sangria):
     """Preto liso, para o bolso de tras do fichario mostrar a mesma divisoria."""
-    numero, nome, volume, caps, _ = arco
+    numero, nome, volume, caps, _, _, sub = arco
     b = SANGRIA if sangria else 0
     img = Image.new("RGB", (W + 2 * b, H + 2 * b), "black")
     d = ImageDraw.Draw(img)
     jx0, jy0, jx1, jy1 = b + LADO, b + LADO, b + W - LADO, b + H - BLOCO
     # fio fino da janela, para o verso ter a forma da frente
     d.rounded_rectangle([jx0, jy0, jx1, jy1], radius=RAIO_DENTRO, outline=(70, 70, 70), width=2)
-    nome_e_numero(d, img, b, jy0, jy1 - jy0, jx1 - jx0 - mm(6), numero, nome, "white")
+    nome_e_numero(d, img, b, jy0, jy1 - jy0, jx1 - jx0 - mm(6), numero, nome, sub, "white")
     meio, jy1 = moldura(d, b, b)
     rodape(d, meio, jy1, volume, caps)
     return img
@@ -345,19 +369,17 @@ def folha(cartas, espelhar=False):
     return pg
 
 
-if __name__ == "__main__":
-    saida, capas = sys.argv[1], sys.argv[2]
-    os.makedirs(os.path.join(saida, "cartas"), exist_ok=True)
+def gera(pasta, lista, sub, capas):
+    os.makedirs(os.path.join(pasta, "cartas"), exist_ok=True)
     frentes, versos, sem_capa = [], [], []
-    for arco in ARCOS:
-        n = arco[0]
-        vol = CAPAS.get(arco[1], arco[2])
-        if not capa_de(capas, vol):
-            sem_capa.append(vol)
+    for n, (nome, volume, caps, novo, vol_capa) in enumerate(lista, 1):
+        arco = (n, nome, volume, caps, novo, vol_capa or volume, sub)
+        if not capa_de(capas, arco[5]):
+            sem_capa.append(nome)
         arredonda(frente(arco, capas, False)).save(
-            os.path.join(saida, "cartas", "arco-%02d-frente.png" % n), dpi=(DPI, DPI))
+            os.path.join(pasta, "cartas", "%02d-frente.png" % n), dpi=(DPI, DPI))
         arredonda(verso(arco, False)).save(
-            os.path.join(saida, "cartas", "arco-%02d-verso.png" % n), dpi=(DPI, DPI))
+            os.path.join(pasta, "cartas", "%02d-verso.png" % n), dpi=(DPI, DPI))
         frentes.append(frente(arco, capas, True))
         versos.append(verso(arco, True))
 
@@ -365,15 +387,22 @@ if __name__ == "__main__":
     for i in range(0, len(frentes), 9):
         paginas.append(folha(frentes[i:i + 9]))
         paginas.append(folha(versos[i:i + 9], espelhar=True))
-    paginas[0].save(os.path.join(saida, "divisorias-A4.pdf"), save_all=True,
+    paginas[0].save(os.path.join(pasta, "divisorias-A4.pdf"), save_all=True,
                     append_images=paginas[1:], resolution=DPI)
-    for i, p in enumerate(paginas):
-        p.resize((A4W // 4, A4H // 4)).save(os.path.join(saida, "folha-%d.png" % (i + 1)))
 
-    ims = [Image.open(os.path.join(saida, "cartas", f)) for f in
-           ("arco-01-frente.png", "arco-12-frente.png", "arco-18-frente.png", "arco-12-verso.png")]
-    p = Image.new("RGB", (W * 4 + 100, H + 40), (200, 200, 200))
-    for k, im in enumerate(ims):
-        p.paste(im, (20 + k * (W + 20), 20), im)
-    p.save(os.path.join(saida, "previa.png"))
-    print("sem capa:", ", ".join("%03d" % v for v in sem_capa))
+    # todas as frentes lado a lado, em meia resolucao
+    col = 7
+    lin = -(-len(frentes) // col)
+    p = Image.new("RGB", (col * (W + 20) + 20, lin * (H + 20) + 20), (200, 200, 200))
+    for k in range(len(frentes)):
+        im = Image.open(os.path.join(pasta, "cartas", "%02d-frente.png" % (k + 1)))
+        p.paste(im, (20 + k % col * (W + 20), 20 + k // col * (H + 20)), im)
+    p.resize((p.width // 2, p.height // 2), Image.LANCZOS).save(os.path.join(pasta, "previa.png"))
+    return sem_capa
+
+
+if __name__ == "__main__":
+    saida, capas = sys.argv[1], sys.argv[2]
+    for nome, lista, sub in CONJUNTOS:
+        sem = gera(os.path.join(saida, nome), lista, sub, capas)
+        print("%s: %d divisorias; sem capa: %s" % (nome, len(lista), ", ".join(sem) or "-"))
