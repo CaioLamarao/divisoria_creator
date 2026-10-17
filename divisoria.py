@@ -382,36 +382,34 @@ def arredonda(img):
     return f
 
 
-# A4 3 x 3, cada carta com a sangria encostando na da vizinha
+# A4 3 x 3: as cartas encostadas, a sangria de cada uma cobrindo a moldura preta da
+# vizinha; so a volta da grade fica com sangria. A grade fica perto do topo porque a
+# MG2410 nao imprime os ultimos ~17 mm do pe da folha.
 A4W, A4H = mm(210), mm(297)
-CW, CH = W + 2 * SANGRIA, H + 2 * SANGRIA
 
 
 def folha(cartas, espelhar=False, eco=False):
-    """Na versao economica as cartas vem sem sangria e encostadas, e a grade sobe:
-    a MG2410 corta o pe da folha bem antes da borda."""
     pg = Image.new("RGB", (A4W, A4H), "white")
     s = 0 if eco else SANGRIA
-    cw, ch = W + 2 * s, H + 2 * s
-    mx = (A4W - 3 * cw) // 2
-    my = mm(10) if eco else (A4H - 3 * ch) // 2
+    mx = (A4W - 3 * W - 2 * s) // 2
+    my = mm(8)
     d = ImageDraw.Draw(pg)
     for i, c in enumerate(cartas):
         col, lin = i % 3, i // 3
         if espelhar:      # o verso e impresso virando pela borda longa
             col = 2 - col
-        pg.paste(c, (mx + col * cw, my + lin * ch))
+        pg.paste(c, (mx + col * W, my + lin * H))
     # marcas de corte na margem, alinhadas com as linhas de corte
-    marca, folga = mm(4), mm(1)
-    CW, CH = cw, ch
-    cortes_x = sorted({mx + c * CW + v for c in range(3) for v in (s, s + W)})
-    cortes_y = sorted({my + l * CH + v for l in range(3) for v in (s, s + H)})
+    marca, folga = mm(3.5), mm(1)
+    lx, ly = 3 * W + 2 * s, 3 * H + 2 * s
+    cortes_x = [mx + s + c * W for c in range(4)]
+    cortes_y = [my + s + l * H for l in range(4)]
     for x in cortes_x:
         d.line([(x, my - folga - marca), (x, my - folga)], fill="black", width=2)
-        d.line([(x, my + 3 * CH + folga), (x, my + 3 * CH + folga + marca)], fill="black", width=2)
+        d.line([(x, my + ly + folga), (x, my + ly + folga + marca)], fill="black", width=2)
     for y in cortes_y:
         d.line([(mx - folga - marca, y), (mx - folga, y)], fill="black", width=2)
-        d.line([(mx + 3 * CW + folga, y), (mx + 3 * CW + folga + marca, y)], fill="black", width=2)
+        d.line([(mx + lx + folga, y), (mx + lx + folga + marca, y)], fill="black", width=2)
     return pg
 
 
@@ -428,14 +426,11 @@ def gera(pasta, lista, sub, capas):
         arredonda(verso(arco, False)).save(
             os.path.join(pasta, "cartas", "%02d-verso.png" % n), dpi=(DPI, DPI))
 
-    # dois PDFs: o de moldura preta e o economico, so contorno; os dois com o fundo em pontos
+    # dois PDFs, so com as frentes (vao coladas sobre cartas): o de moldura preta e o
+    # economico, so contorno; os dois com o fundo em pontos
     for eco, arquivo in ((False, "divisorias-A4.pdf"), (True, "divisorias-economica-A4.pdf")):
         fr = [frente(a, capas, not eco, OPACIDADE_PAPEL, True, eco) for a in arcos]
-        vs = [verso(a, not eco, eco) for a in arcos]
-        paginas = []
-        for i in range(0, len(fr), 9):
-            paginas.append(folha(fr[i:i + 9], eco=eco))
-            paginas.append(folha(vs[i:i + 9], espelhar=True, eco=eco))
+        paginas = [folha(fr[i:i + 9], eco=eco) for i in range(0, len(fr), 9)]
         paginas[0].save(os.path.join(pasta, arquivo), save_all=True,
                         append_images=paginas[1:], resolution=DPI)
 
