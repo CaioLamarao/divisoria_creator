@@ -24,6 +24,7 @@ RAIO_FORA = mm(3.2)
 RAIO_DENTRO = mm(1.0)
 
 OPACIDADE = 0.22
+OPACIDADE_PAPEL = 0.25   # no PDF de impressao: o fundo vira pontos e precisa de um pouco mais
 REFORCO = 2         # px de contorno no nome: o fio do didone some na impressora
 AQUI = os.path.dirname(os.path.abspath(__file__))
 FONTES = os.path.join(AQUI, "fontes")
@@ -386,19 +387,25 @@ A4W, A4H = mm(210), mm(297)
 CW, CH = W + 2 * SANGRIA, H + 2 * SANGRIA
 
 
-def folha(cartas, espelhar=False):
+def folha(cartas, espelhar=False, eco=False):
+    """Na versao economica as cartas vem sem sangria e encostadas, e a grade sobe:
+    a MG2410 corta o pe da folha bem antes da borda."""
     pg = Image.new("RGB", (A4W, A4H), "white")
-    mx, my = (A4W - 3 * CW) // 2, (A4H - 3 * CH) // 2
+    s = 0 if eco else SANGRIA
+    cw, ch = W + 2 * s, H + 2 * s
+    mx = (A4W - 3 * cw) // 2
+    my = mm(10) if eco else (A4H - 3 * ch) // 2
     d = ImageDraw.Draw(pg)
     for i, c in enumerate(cartas):
         col, lin = i % 3, i // 3
         if espelhar:      # o verso e impresso virando pela borda longa
             col = 2 - col
-        pg.paste(c, (mx + col * CW, my + lin * CH))
+        pg.paste(c, (mx + col * cw, my + lin * ch))
     # marcas de corte na margem, alinhadas com as linhas de corte
     marca, folga = mm(4), mm(1)
-    cortes_x = sorted({mx + c * CW + s for c in range(3) for s in (SANGRIA, SANGRIA + W)})
-    cortes_y = sorted({my + l * CH + s for l in range(3) for s in (SANGRIA, SANGRIA + H)})
+    CW, CH = cw, ch
+    cortes_x = sorted({mx + c * CW + v for c in range(3) for v in (s, s + W)})
+    cortes_y = sorted({my + l * CH + v for l in range(3) for v in (s, s + H)})
     for x in cortes_x:
         d.line([(x, my - folga - marca), (x, my - folga)], fill="black", width=2)
         d.line([(x, my + 3 * CH + folga), (x, my + 3 * CH + folga + marca)], fill="black", width=2)
@@ -410,30 +417,33 @@ def folha(cartas, espelhar=False):
 
 def gera(pasta, lista, sub, capas):
     os.makedirs(os.path.join(pasta, "cartas"), exist_ok=True)
-    frentes, versos, sem_capa = [], [], []
+    arcos, sem_capa = [], []
     for n, (nome, volume, caps, novo, vol_capa) in enumerate(lista, 1):
         arco = (n, nome, volume, caps, novo, vol_capa or volume, sub)
+        arcos.append(arco)
         if not capa_de(capas, arco[5]):
             sem_capa.append(nome)
         arredonda(frente(arco, capas, False)).save(
             os.path.join(pasta, "cartas", "%02d-frente.png" % n), dpi=(DPI, DPI))
         arredonda(verso(arco, False)).save(
             os.path.join(pasta, "cartas", "%02d-verso.png" % n), dpi=(DPI, DPI))
-        frentes.append(frente(arco, capas, True, pontilhar=True))
-        versos.append(verso(arco, True))
 
-    paginas = []
-    for i in range(0, len(frentes), 9):
-        paginas.append(folha(frentes[i:i + 9]))
-        paginas.append(folha(versos[i:i + 9], espelhar=True))
-    paginas[0].save(os.path.join(pasta, "divisorias-A4.pdf"), save_all=True,
-                    append_images=paginas[1:], resolution=DPI)
+    # dois PDFs: o de moldura preta e o economico, so contorno; os dois com o fundo em pontos
+    for eco, arquivo in ((False, "divisorias-A4.pdf"), (True, "divisorias-economica-A4.pdf")):
+        fr = [frente(a, capas, not eco, OPACIDADE_PAPEL, True, eco) for a in arcos]
+        vs = [verso(a, not eco, eco) for a in arcos]
+        paginas = []
+        for i in range(0, len(fr), 9):
+            paginas.append(folha(fr[i:i + 9], eco=eco))
+            paginas.append(folha(vs[i:i + 9], espelhar=True, eco=eco))
+        paginas[0].save(os.path.join(pasta, arquivo), save_all=True,
+                        append_images=paginas[1:], resolution=DPI)
 
     # todas as frentes lado a lado, em meia resolucao
     col = 7
-    lin = -(-len(frentes) // col)
+    lin = -(-len(arcos) // col)
     p = Image.new("RGB", (col * (W + 20) + 20, lin * (H + 20) + 20), (200, 200, 200))
-    for k in range(len(frentes)):
+    for k in range(len(arcos)):
         im = Image.open(os.path.join(pasta, "cartas", "%02d-frente.png" % (k + 1)))
         p.paste(im, (20 + k % col * (W + 20), 20 + k // col * (H + 20)), im)
     p.resize((p.width // 2, p.height // 2), Image.LANCZOS).save(os.path.join(pasta, "previa.png"))
