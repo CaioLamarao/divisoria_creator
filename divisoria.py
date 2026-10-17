@@ -80,7 +80,7 @@ ARCOS = [
     ("Amazon Lily", 53, (514, 524), False, 53),
     ("Impel Down", 54, (525, 548), False, 54),
     ("Marineford", 56, (549, 580), False, 57),
-    ("Post-War", 59, (581, 597), False, None),
+    ("Post-War", 59, (581, 597), False, 60),
     ("Fish-Man Island", 61, (598, 653), True, 61),       # com o retorno a Sabaody
     ("Punk Hazard", 66, (654, 699), True, 67),
     ("Dressrosa", 70, (700, 801), True, 72),
@@ -112,6 +112,7 @@ RECORTES = {
     48: (0.0, 0.26, 1.0, 0.91),
     51: (0.0, 0.25, 1.0, 0.76),      # o titulo desta fica embaixo
     57: (0.0, 0.29, 1.0, 0.89),
+    60: (0.0, 0.26, 1.0, 0.90),
     61: (0.0, 0.31, 1.0, 0.90),
     67: (0.0, 0.27, 1.0, 0.90),
     72: (0.0, 0.26, 1.0, 0.89),
