@@ -64,10 +64,10 @@ SAGAS = [
 ARCOS = [
     ("Romance Dawn", 1, (1, 7), False, 1),
     ("Orange Town", 1, (8, 21), False, 2),
-    ("Syrup Village", 3, (22, 41), False, None),
-    ("Baratie", 5, (42, 68), False, None),
-    ("Arlong Park", 8, (69, 100), False, None),          # com Loguetown
-    ("Little Garden", 12, (101, 129), False, None),      # com Reverse Mountain e Whisky Peak
+    ("Syrup Village", 3, (22, 41), False, 4),
+    ("Baratie", 5, (42, 68), False, 7),
+    ("Arlong Park", 8, (69, 100), False, 10),          # com Loguetown
+    ("Little Garden", 12, (101, 129), False, 15),      # com Reverse Mountain e Whisky Peak
     ("Drum Island", 15, (130, 154), False, 16),
     ("Alabasta", 17, (155, 217), False, 20),
     ("Jaya", 24, (218, 236), False, 24),
@@ -97,6 +97,11 @@ CONJUNTOS = [("sagas", SAGAS, "SAGA"), ("arcos", ARCOS, None)]
 # (esquerda, topo, direita, base), em fracao da capa
 RECORTES = {
     1: (0.12, 0.27, 0.875, 0.695),   # so o quadro da ilustracao
+    2: (0.10, 0.285, 0.915, 0.80),
+    4: (0.125, 0.30, 0.905, 0.79),
+    7: (0.125, 0.295, 0.88, 0.78),
+    10: (0.125, 0.29, 0.905, 0.78),
+    15: (0.0, 0.30, 1.0, 0.895),
     16: (0.0, 0.31, 1.0, 0.90),
     20: (0.0, 0.31, 1.0, 0.89),
     24: (0.0, 0.33, 1.0, 0.90),
