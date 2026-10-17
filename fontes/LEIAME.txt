@@ -1,0 +1,4 @@
+Fontes livres (SIL Open Font License), usadas quando as do Windows nao existem:
+- BodoniModa-Black.ttf: instancia estatica de Bodoni Moda (wght 800, opsz 18), no lugar do Bodoni MT Bold
+- BarlowCondensed-*.ttf: no lugar do Bahnschrift Condensed
+Fonte: https://github.com/google/fonts
