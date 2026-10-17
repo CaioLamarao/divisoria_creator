@@ -1,7 +1,8 @@
 """Divisorias de arco para o fichario: frente, verso e folhas A4 com sangria.
 
 uso: python divisoria.py <pasta-de-saida> <pasta-das-capas>
-As capas sao vol-NNN.jpg (o volume onde o arco comeca). Capa que falta sai sem fundo.
+As capas sao vol-NNN.jpg: o volume onde o arco comeca, ou o escolhido em CAPAS.
+Capa que falta sai sem fundo.
 """
 import sys, os
 from PIL import Image, ImageDraw, ImageFont, ImageOps, ImageFilter
@@ -42,7 +43,7 @@ RETA_LIVRE = {"Bold Condensed": os.path.join(FONTES, "BarlowCondensed-Bold.ttf")
 
 ARCOS = [
     # numero, nome, volume, capitulos, novo mundo
-    (1, "Romance Dawn", 1, (1, 100), False),
+    (1, "East Blue", 1, (1, 100), False),
     (2, "Alabasta", 17, (155, 217), False),
     (3, "Skypiea", 26, (237, 302), False),
     (4, "Water 7", 34, (322, 374), False),
@@ -57,12 +58,19 @@ ARCOS = [
     (13, "Whole Cake Island", 82, (825, 902), True),
     (14, "Wano", 90, (909, 1057), True),
     (15, "Egghead", 105, (1058, 1125), True),
+    (16, "Elbaph", 111, (1126, None), True),     # em andamento: sem capitulo final
 ]
+
+# arcos cujo fundo vem de outra capa que nao a do volume de inicio
+CAPAS = {2: 20, 3: 30, 4: 37}
 
 # o recorte de cada capa que fica no fundo: sem o logo e sem os creditos
 # (esquerda, topo, direita, base), em fracao da capa
 RECORTES = {
     1: (0.12, 0.27, 0.875, 0.695),   # so o quadro da ilustracao
+    20: (0.0, 0.31, 1.0, 0.89),
+    30: (0.0, 0.315, 1.0, 0.90),
+    37: (0.0, 0.295, 1.0, 0.89),
     54: (0.0, 0.18, 1.0, 0.90),
 }
 RECORTE_PADRAO = (0.0, 0.17, 1.0, 0.90)
@@ -179,7 +187,9 @@ def rodape(d, meio, jy1, volume, caps):
     escreve_junto(d, meio, jy1 - ABA_ALT + mm(2.6), "Vol. %03d" % volume,
                   fv, CINZA_TEXTO, mm(0.25))
     fc = fonte_reta(mm(2.9), "SemiBold Condensed")
-    escreve_junto(d, meio, jy1 + mm(6.3), "Cap. %03d \u2013 %03d" % caps,
+    ini, fim = caps
+    texto = "Cap. %03d \u2013 %03d" % caps if fim else "Cap. %03d \u2013" % ini
+    escreve_junto(d, meio, jy1 + mm(6.3), texto,
                   fc, CINZA_APOIO, mm(0.12))
 
 
@@ -234,8 +244,9 @@ def frente(arco, pasta_capas, sangria):
     jx0, jy0, jx1, jy1 = b + LADO, b + LADO, b + W - LADO, b + H - BLOCO
     jw, jh = jx1 - jx0, jy1 - jy0
 
-    capa = capa_de(pasta_capas, volume)
-    a = arte(capa, volume, jw, jh) if capa else Image.new("L", (jw, jh), 255)
+    vol_capa = CAPAS.get(numero, volume)
+    capa = capa_de(pasta_capas, vol_capa)
+    a = arte(capa, vol_capa, jw, jh) if capa else Image.new("L", (jw, jh), 255)
     janela = Image.blend(Image.new("L", (jw, jh), 255), a, OPACIDADE).convert("RGB")
     mj = Image.new("L", (jw, jh), 0)
     ImageDraw.Draw(mj).rounded_rectangle([0, 0, jw - 1, jh - 1], radius=RAIO_DENTRO, fill=255)
@@ -255,7 +266,7 @@ def frente(arco, pasta_capas, sangria):
             xa = meio + s * (tl / 2 + mm(1.5))
             d.line([(xa, y), (xa + s * mm(6), y)], fill=(40, 40, 40), width=2)
 
-    nome_e_numero(d, img, b, jy0, jh, jw - mm(6), numero, nome, "black", capa, volume)
+    nome_e_numero(d, img, b, jy0, jh, jw - mm(6), numero, nome, "black", capa, vol_capa)
     rodape(d, meio, jy1, volume, caps)
     return img
 
@@ -315,7 +326,8 @@ if __name__ == "__main__":
     os.makedirs(os.path.join(saida, "cartas"), exist_ok=True)
     frentes, versos, sem_capa = [], [], []
     for arco in ARCOS:
-        n, vol = arco[0], arco[2]
+        n = arco[0]
+        vol = CAPAS.get(n, arco[2])
         if not capa_de(capas, vol):
             sem_capa.append(vol)
         arredonda(frente(arco, capas, False)).save(
