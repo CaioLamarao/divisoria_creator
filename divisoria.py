@@ -44,33 +44,43 @@ RETA_LIVRE = {"Bold Condensed": os.path.join(FONTES, "BarlowCondensed-Bold.ttf")
 ARCOS = [
     # numero, nome, volume, capitulos, novo mundo
     (1, "East Blue", 1, (1, 100), False),
-    (2, "Alabasta", 17, (155, 217), False),
-    (3, "Skypiea", 26, (237, 302), False),
-    (4, "Water 7", 34, (322, 374), False),
-    (5, "Enies Lobby", 39, (375, 430), False),
-    (6, "Thriller Bark", 46, (442, 489), False),
-    (7, "Sabaody", 50, (490, 513), False),
-    (8, "Impel Down", 54, (525, 548), False),
-    (9, "Marineford", 56, (549, 580), False),
-    (10, "Fish-Man Island", 61, (603, 653), True),
-    (11, "Punk Hazard", 66, (654, 699), True),
-    (12, "Dressrosa", 70, (700, 801), True),
-    (13, "Whole Cake Island", 82, (825, 902), True),
-    (14, "Wano", 90, (909, 1057), True),
-    (15, "Egghead", 105, (1058, 1125), True),
-    (16, "Elbaph", 111, (1126, None), True),     # em andamento: sem capitulo final
+    (2, "Drum Island", 12, (101, 154), False),   # com Reverse Mountain, Whisky Peak e Little Garden
+    (3, "Alabasta", 17, (155, 217), False),
+    (4, "Jaya", 24, (218, 236), False),
+    (5, "Skypiea", 26, (237, 302), False),
+    (6, "Long Ring Long Land", 32, (303, 321), False),
+    (7, "Water 7", 34, (322, 374), False),
+    (8, "Enies Lobby", 39, (375, 430), False),
+    (9, "Thriller Bark", 46, (442, 489), False),
+    (10, "Sabaody", 50, (490, 513), False),
+    (11, "Amazon Lily", 53, (514, 524), False),
+    (12, "Impel Down", 54, (525, 548), False),
+    (13, "Marineford", 56, (549, 580), False),
+    (14, "Fish-Man Island", 61, (603, 653), True),
+    (15, "Punk Hazard", 66, (654, 699), True),
+    (16, "Dressrosa", 70, (700, 801), True),
+    (17, "Zou", 80, (802, 824), True),
+    (18, "Whole Cake Island", 82, (825, 902), True),
+    (19, "Wano", 90, (909, 1057), True),
+    (20, "Egghead", 105, (1058, 1125), True),
+    (21, "Elbaph", 111, (1126, None), True),     # em andamento: sem capitulo final
 ]
 
 # arcos cujo fundo vem de outra capa que nao a do volume de inicio
-CAPAS = {2: 20, 3: 30, 4: 37, 5: 44, 6: 48, 7: 51, 9: 57,
-         11: 67, 12: 72, 13: 83, 14: 103, 15: 106, 16: 112}
+CAPAS = {"Drum Island": 16, "Alabasta": 20, "Skypiea": 30, "Long Ring Long Land": 33,
+         "Water 7": 37, "Enies Lobby": 44, "Thriller Bark": 48, "Sabaody": 51,
+         "Marineford": 57, "Punk Hazard": 67, "Dressrosa": 72, "Zou": 81,
+         "Whole Cake Island": 83, "Wano": 103, "Egghead": 106, "Elbaph": 112}
 
 # o recorte de cada capa que fica no fundo: sem o logo e sem os creditos
 # (esquerda, topo, direita, base), em fracao da capa
 RECORTES = {
     1: (0.12, 0.27, 0.875, 0.695),   # so o quadro da ilustracao
+    16: (0.0, 0.31, 1.0, 0.90),
     20: (0.0, 0.31, 1.0, 0.89),
+    24: (0.0, 0.33, 1.0, 0.90),
     30: (0.0, 0.315, 1.0, 0.90),
+    33: (0.0, 0.33, 1.0, 0.89),
     37: (0.0, 0.295, 1.0, 0.89),
     44: (0.0, 0.27, 1.0, 0.89),
     48: (0.0, 0.26, 1.0, 0.91),
@@ -79,10 +89,12 @@ RECORTES = {
     61: (0.0, 0.31, 1.0, 0.90),
     67: (0.0, 0.27, 1.0, 0.90),
     72: (0.0, 0.26, 1.0, 0.89),
+    81: (0.0, 0.27, 1.0, 0.905),
     83: (0.0, 0.25, 1.0, 0.895),
     103: (0.0, 0.24, 1.0, 0.81),     # edicao americana: sem o "volume 103" de baixo
     106: (0.0, 0.24, 1.0, 0.915),
     112: (0.0, 0.235, 1.0, 0.78),    # sem o "volume 112" de baixo
+    53: (0.0, 0.25, 1.0, 0.80),      # o titulo desta fica embaixo
     54: (0.0, 0.18, 1.0, 0.90),
 }
 RECORTE_PADRAO = (0.0, 0.17, 1.0, 0.90)
@@ -256,7 +268,7 @@ def frente(arco, pasta_capas, sangria):
     jx0, jy0, jx1, jy1 = b + LADO, b + LADO, b + W - LADO, b + H - BLOCO
     jw, jh = jx1 - jx0, jy1 - jy0
 
-    vol_capa = CAPAS.get(numero, volume)
+    vol_capa = CAPAS.get(nome, volume)
     capa = capa_de(pasta_capas, vol_capa)
     a = arte(capa, vol_capa, jw, jh) if capa else Image.new("L", (jw, jh), 255)
     janela = Image.blend(Image.new("L", (jw, jh), 255), a, OPACIDADE).convert("RGB")
@@ -339,7 +351,7 @@ if __name__ == "__main__":
     frentes, versos, sem_capa = [], [], []
     for arco in ARCOS:
         n = arco[0]
-        vol = CAPAS.get(n, arco[2])
+        vol = CAPAS.get(arco[1], arco[2])
         if not capa_de(capas, vol):
             sem_capa.append(vol)
         arredonda(frente(arco, capas, False)).save(
@@ -359,7 +371,7 @@ if __name__ == "__main__":
         p.resize((A4W // 4, A4H // 4)).save(os.path.join(saida, "folha-%d.png" % (i + 1)))
 
     ims = [Image.open(os.path.join(saida, "cartas", f)) for f in
-           ("arco-01-frente.png", "arco-08-frente.png", "arco-13-frente.png", "arco-08-verso.png")]
+           ("arco-01-frente.png", "arco-12-frente.png", "arco-18-frente.png", "arco-12-verso.png")]
     p = Image.new("RGB", (W * 4 + 100, H + 40), (200, 200, 200))
     for k, im in enumerate(ims):
         p.paste(im, (20 + k * (W + 20), 20), im)
