@@ -24,6 +24,7 @@ RAIO_FORA = mm(3.2)
 RAIO_DENTRO = mm(1.0)
 
 OPACIDADE = 0.22
+REFORCO = 2         # px de contorno no nome: o fio do didone some na impressora
 AQUI = os.path.dirname(os.path.abspath(__file__))
 FONTES = os.path.join(AQUI, "fontes")
 
@@ -210,7 +211,7 @@ def linhas_do_nome(d, nome, largura):
     return melhor[1]
 
 
-def escreve_junto(d, cx, cy, texto, fonte, cor, aperto):
+def escreve_junto(d, cx, cy, texto, fonte, cor, aperto, traco=0):
     # letra a letra, apertado; o ponto e o espaco nao apertam, senao o "." some
     larg = [d.textlength(ch, font=fonte) for ch in texto]
     passo = [w - (0 if ch in ". " or (i + 1 < len(texto) and texto[i + 1] in ". ") else aperto)
@@ -218,7 +219,7 @@ def escreve_junto(d, cx, cy, texto, fonte, cor, aperto):
     total = sum(passo[:-1]) + larg[-1]
     x = cx - total / 2
     for ch, p in zip(texto, passo):
-        d.text((x, cy), ch, font=fonte, fill=cor, anchor="lm")
+        d.text((x, cy), ch, font=fonte, fill=cor, anchor="lm", stroke_width=traco, stroke_fill=cor)
         x += p
 
 
@@ -284,15 +285,15 @@ def nome_e_numero(d, img, b, jy0, jh, util, numero, nome, sub, cor, capa=None, v
     fonte = min((cabe(d, l, SERIFA, 104, util) for l in linhas), key=lambda f: f.size)
     y = base + mm(4)
     for l in linhas:
-        d.text((meio, y), l, font=fonte, fill=cor, anchor="mt")
+        d.text((meio, y), l, font=fonte, fill=cor, anchor="mt", stroke_width=REFORCO, stroke_fill=cor)
         y += fonte.size * 1.02
     if sub:
         # "SAGA" logo abaixo, no mesmo desenho e um pouco menor
         fs = ImageFont.truetype(SERIFA, round(fonte.size * 0.62))
-        escreve_junto(d, meio, y + fs.size * 0.55, " ".join(sub), fs, cor, 0)
+        escreve_junto(d, meio, y + fs.size * 0.55, " ".join(sub), fs, cor, 0, REFORCO)
 
 
-def frente(arco, pasta_capas, sangria):
+def frente(arco, pasta_capas, sangria, opacidade=OPACIDADE):
     numero, nome, volume, caps, novo, vol_capa, sub = arco
     b = SANGRIA if sangria else 0
     img = Image.new("RGB", (W + 2 * b, H + 2 * b), "black")
@@ -301,7 +302,9 @@ def frente(arco, pasta_capas, sangria):
 
     capa = capa_de(pasta_capas, vol_capa)
     a = arte(capa, vol_capa, jw, jh) if capa else Image.new("L", (jw, jh), 255)
-    janela = Image.blend(Image.new("L", (jw, jh), 255), a, OPACIDADE).convert("RGB")
+    # contraste esticado antes de clarear: o cinza mais escuro da capa vira preto
+    a = ImageOps.autocontrast(a, cutoff=1)
+    janela = Image.blend(Image.new("L", (jw, jh), 255), a, opacidade).convert("RGB")
     mj = Image.new("L", (jw, jh), 0)
     ImageDraw.Draw(mj).rounded_rectangle([0, 0, jw - 1, jh - 1], radius=RAIO_DENTRO, fill=255)
     img.paste(janela, (jx0, jy0), mj)
