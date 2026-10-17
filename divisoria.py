@@ -62,7 +62,8 @@ ARCOS = [
 ]
 
 # arcos cujo fundo vem de outra capa que nao a do volume de inicio
-CAPAS = {2: 20, 3: 30, 4: 37, 5: 44, 6: 48, 7: 51, 9: 57}
+CAPAS = {2: 20, 3: 30, 4: 37, 5: 44, 6: 48, 7: 51, 9: 57,
+         11: 67, 12: 72, 13: 83, 14: 103, 15: 106}
 
 # o recorte de cada capa que fica no fundo: sem o logo e sem os creditos
 # (esquerda, topo, direita, base), em fracao da capa
@@ -76,6 +77,11 @@ RECORTES = {
     51: (0.0, 0.25, 1.0, 0.76),      # o titulo desta fica embaixo
     57: (0.0, 0.29, 1.0, 0.89),
     61: (0.0, 0.31, 1.0, 0.90),
+    67: (0.0, 0.27, 1.0, 0.90),
+    72: (0.0, 0.26, 1.0, 0.89),
+    83: (0.0, 0.25, 1.0, 0.895),
+    103: (0.0, 0.24, 1.0, 0.81),     # edicao americana: sem o "volume 103" de baixo
+    106: (0.0, 0.24, 1.0, 0.915),
     54: (0.0, 0.18, 1.0, 0.90),
 }
 RECORTE_PADRAO = (0.0, 0.17, 1.0, 0.90)
